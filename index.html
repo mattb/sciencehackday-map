@@ -68,7 +68,7 @@ var path = d3.geo.path()
 var g = svg.append("g");
 
 // load and display the World
-d3.json("world-110m2.json", function(error, topology) {
+d3.json("world-simp.json", function(error, topology) {
 
 var markers = [],
   labels = [];
@@ -84,7 +84,7 @@ d3.json("flags-with-location.js", function(error, data) {
 
     var force = d3.layout.force()
             .nodes(labels)
-            .charge(-30)
+            .charge(-20)
             .gravity(0)
             .chargeDistance(width / 8)
             .size([width, height]);
@@ -106,7 +106,7 @@ d3.json("flags-with-location.js", function(error, data) {
        .data(labels)
        .enter()
        .append("text")
-       .attr("text-anchor", "middle")
+       .attr("text-anchor", "end")
        .text(function(d) { 
          return d.name;
        })
@@ -132,10 +132,7 @@ d3.json("flags-with-location.js", function(error, data) {
          });
        })
 
-       let tick = 0;
        force.on("tick", function(e) {
-         tick += 1;
-         console.log(tick);
          var k = .1 * e.alpha;
          labels.forEach(function(o, j) {
            o.y += (markers[j].y - o.y) * k;
