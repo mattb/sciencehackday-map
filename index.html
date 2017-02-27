@@ -100,7 +100,8 @@ d3.json("flags-with-location.js", function(error, data) {
                return d.y;
        })
        .attr("r", 6)
-       .style("fill", "#ccc");
+       .style('opacity', "0.7")
+       .style("fill", "#999");
 
     g.selectAll("text")
        .data(labels)
