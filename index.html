@@ -57,6 +57,7 @@ d3.json("world-simp.json", function(error, topology) {
         .data(markers)
         .enter()
         .append("circle")
+        .attr("id", function(d, i) { return "circle-" + i })
         .attr("cx", function(d) {
           return d.x;
         })
@@ -80,21 +81,28 @@ d3.json("world-simp.json", function(error, topology) {
         .style("font-weight", "bold")
         .style("font-family", "blackoutmidnight")
         .style('opacity','0.0')
-        .on('mouseover', function(d){
+        .on('mouseover', function(d, i){
           g.selectAll("text").transition().duration(250).style({
             'font-size': '12px', 
             opacity:'0.1'
           });
+          d3.select("#line-" + i).transition().style({opacity: '0.9'});
+
+          g.selectAll("circle").transition().style({ opacity:'0.1' });
+          d3.select("#circle-" + i).transition().style({opacity: '0.9'});
+
           d3.select(this).transition().duration(250).style({
             'font-size': '20px', 
             opacity:'1.0'
           });
         })
-      .on('mouseout', function(d){
+      .on('mouseout', function(d, i){
         g.selectAll("text").transition().duration(250).style({
           'font-size': '12px', 
           opacity:'0.7'
         });
+        g.selectAll("circle").transition().duration(250).style({ opacity:'0.7' });
+        d3.select("#line-" + i).transition().style({opacity: '0.0'});
       })
 
       var index = 0;
@@ -115,7 +123,32 @@ d3.json("world-simp.json", function(error, topology) {
           .transition()
           .style('opacity', '0.8')
           .attr("x", function(d) { return d.x; })
-          .attr("y", function(d) { return d.y; });
+          .attr("y", function(d) { return d.y; })
+          .attr("dy", function(d) { return d.height; });
+
+        g.selectAll("line")
+          .data(labels)
+          .enter()
+          .append("line")
+          .attr("x1", function(d, i) { return d.x - 2; })
+          .attr("y1", function(d, i) { return d.y; })
+          .attr("x2", function(d, i) { return markers[i].x })
+          .attr("y2", function(d, i) { return markers[i].y })
+          .style('opacity', "0.0")
+          .attr("stroke", "#999")
+          .attr("id", function(d, i) { return "line-" + i })
+          .attr("stroke-width", function(d,i) {
+            var x1 = d.x;
+            var y1 = d.y;
+            var x2 = markers[i].x;
+            var y2 = markers[i].y;
+            if((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) > 300) {
+              return 2;
+            } else {
+              return 0;
+            }
+          });
+
       }, 1);
     });
 
