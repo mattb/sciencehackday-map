@@ -10,45 +10,10 @@ path {
 </style>
 <body>
 <script src="//d3js.org/d3.v3.min.js"></script>
+<script src="labeler.js"></script>
 <script src="//d3js.org/topojson.v0.min.js"></script>
 <script src="//d3js.org/d3.geo.projection.v0.min.js"></script>
 <script>
-function arrangeLabels() {
-  var move = 1;
-  while(move > 0) {
-    move = 0;
-    svg.selectAll("text")
-      .each(function() {
-        var that = this,
-        a = this.getBoundingClientRect();
-        svg.selectAll("text")
-          .each(function() {
-            if(this != that) {
-              var b = this.getBoundingClientRect();
-              if((Math.abs(a.left - b.left) * 2.5 < (a.width + b.width)) &&
-                  (Math.abs(a.top - b.top) * 2.5 < (a.height + b.height))) {
-                // overlap, move labels
-                var dx = (Math.max(0, a.right - b.left) +
-                    Math.min(0, a.left - b.right)) * 0.01,
-                dy = (Math.max(0, a.bottom - b.top) +
-                    Math.min(0, a.top - b.bottom)) * 0.02,
-                tt = d3.transform(d3.select(this).attr("transform")),
-                to = d3.transform(d3.select(that).attr("transform"));
-                move += Math.abs(dx) + Math.abs(dy);
-
-                to.translate = [ to.translate[0] + dx, to.translate[1] + dy ];
-                tt.translate = [ tt.translate[0] - dx, tt.translate[1] - dy ];
-                d3.select(this).attr("transform", "translate(" + tt.translate + ")");
-                d3.select(that).attr("transform", "translate(" + to.translate + ")");
-                a = this.getBoundingClientRect();
-              }
-            }
-          });
-      });
-  }
-}
-
-
 var width = 940,
     height = 725;
 
@@ -70,91 +35,90 @@ var g = svg.append("g");
 // load and display the World
 d3.json("world-simp.json", function(error, topology) {
 
-var markers = [],
-  labels = [];
-
-// load and display the cities
-d3.json("flags-with-location.js", function(error, data) {
-    data.flags.forEach(function(d, i) {
-      var c = projection([180 + d.longitude, d.latitude]);
-      markers.push({x: c[0] || -10000, y: c[1] || -10000});
-      labels.push({x: c[0] || -10000, y: c[1] || -10000, name: d.name.toUpperCase()})
-    });
-    console.log(labels);
-
-    var force = d3.layout.force()
-            .nodes(labels)
-            .charge(-20)
-            .gravity(0)
-            .chargeDistance(width / 8)
-            .size([width, height]);
-
-    g.selectAll("circle")
-       .data(markers)
-       .enter()
-       .append("circle")
-       .attr("cx", function(d) {
-               return d.x;
-       })
-       .attr("cy", function(d) {
-               return d.y;
-       })
-       .attr("r", 6)
-       .style('opacity', "0.7")
-       .style("fill", "#999");
-
-    g.selectAll("text")
-       .data(labels)
-       .enter()
-       .append("text")
-       .attr("text-anchor", "end")
-       .text(function(d) { 
-         return d.name;
-       })
-       .style("fill", "black")
-       .style("font-size", "12px")
-       .style("font-weight", "bold")
-       .style("font-family", "blackoutmidnight")
-       .style('opacity','0.7')
-       .on('mouseover', function(d){
-         g.selectAll("text").transition().duration(250).style({
-           'font-size': '12px', 
-           opacity:'0.1'
-         });
-         d3.select(this).transition().duration(250).style({
-           'font-size': '20px', 
-           opacity:'1.0'
-         });
-       })
-       .on('mouseout', function(d){
-         g.selectAll("text").transition().duration(250).style({
-           'font-size': '12px', 
-           opacity:'0.7'
-         });
-       })
-
-       force.on("tick", function(e) {
-         var k = .1 * e.alpha;
-         labels.forEach(function(o, j) {
-           o.y += (markers[j].y - o.y) * k;
-           o.x += (markers[j].x - o.x) * k;
-         });
-
-         // Update the position of the text element
-         svg.selectAll("text")
-           .attr("x", function(d) { return d.x; })
-           .attr("y", function(d) { return d.y; });
-       });
-       force.start();
-});
-
-
-g.selectAll("path")
-      .data(topojson.object(topology, topology.objects.countries)
-          .geometries)
+  g.selectAll("path")
+    .data(topojson.object(topology, topology.objects.countries)
+        .geometries)
     .enter()
-      .append("path")
-      .attr("d", path)
+    .append("path")
+    .attr("d", path)
+
+
+    // load and display the cities
+    d3.json("flags-with-location.js", function(error, data) {
+      var markers = [],
+      labels = [];
+      data.flags.forEach(function(d, i) {
+        var c = projection([180 + d.longitude, d.latitude]);
+        markers.push({x: c[0] || -10000, y: c[1] || -10000, r: 6});
+        labels.push({x: c[0] || -10000, y: c[1] || -10000, name: d.name.toUpperCase(), width: 0.0, height: 0.0})
+      });
+
+      g.selectAll("circle")
+        .data(markers)
+        .enter()
+        .append("circle")
+        .attr("cx", function(d) {
+          return d.x;
+        })
+      .attr("cy", function(d) {
+        return d.y;
+      })
+      .attr("r", 6)
+        .style('opacity', "0.7")
+        .style("fill", "#999");
+
+      var labelTexts = g.selectAll("text")
+        .data(labels)
+        .enter()
+        .append("text")
+        .attr("text-anchor", function(d) { return (d.position || "start") })
+        .text(function(d) { 
+          return d.name;
+        })
+      .style("fill", "black")
+        .style("font-size", "12px")
+        .style("font-weight", "bold")
+        .style("font-family", "blackoutmidnight")
+        .style('opacity','0.0')
+        .on('mouseover', function(d){
+          g.selectAll("text").transition().duration(250).style({
+            'font-size': '12px', 
+            opacity:'0.1'
+          });
+          d3.select(this).transition().duration(250).style({
+            'font-size': '20px', 
+            opacity:'1.0'
+          });
+        })
+      .on('mouseout', function(d){
+        g.selectAll("text").transition().duration(250).style({
+          'font-size': '12px', 
+          opacity:'0.7'
+        });
+      })
+
+      var index = 0;
+      labelTexts.each(function() {
+        labels[index].width = this.getBBox().width;
+        labels[index].height = this.getBBox().height;
+        index += 1;
+      });
+
+      setTimeout(function() {
+        d3.labeler()
+          .label(labels)
+          .anchor(markers)
+          .width(width)
+          .height(height)
+          .start(500);
+        svg.selectAll("text")
+          .transition()
+          .style('opacity', '0.8')
+          .attr("x", function(d) { return d.x; })
+          .attr("y", function(d) { return d.y; });
+      }, 1);
+    });
+
 });
 
 </script>
