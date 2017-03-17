@@ -47,10 +47,15 @@ d3.json("world-simp.json", function(error, topology) {
     d3.json("flags-with-location.js", function(error, data) {
       var markers = [],
       labels = [];
+      var seen = {};
       data.flags.forEach(function(d, i) {
         var c = projection([180 + d.longitude, d.latitude]);
-        markers.push({x: c[0] || -10000, y: c[1] || -10000, r: 6});
-        labels.push({x: c[0] || -10000, y: c[1] || -10000, name: d.name.toUpperCase(), width: 0.0, height: 0.0})
+        var name = d.transliterated_name || d.name;
+        if(!seen[d.name]) {
+          markers.push({x: c[0] || -10000, y: c[1] || -10000, r: 6});
+          labels.push({x: c[0] || -10000, y: c[1] || -10000, name: name.toUpperCase(), width: 0.0, height: 0.0})
+          seen[d.name] = 1;
+        }
       });
 
       g.selectAll("circle")
