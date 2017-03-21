@@ -13,10 +13,16 @@ path {
 .rollup { 
   fill: #f4f4f4;
 }
+.flag-text {
+  font-family: "Droid Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 16pt;
+}
 
 </style>
 <body>
   <div id="map"></div>
+<link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Droid+Sans:regular,bold" />
+  
 <script src="//d3js.org/d3.v3.min.js"></script>
 <script src="labeler.js"></script>
 <script src="//d3js.org/topojson.v0.min.js"></script>
@@ -32,7 +38,6 @@ var projection = d3.geo.mercator()
 
 var svg = d3.select("#map").append("svg").classed("map", true)
     .style('background-color', '#d2e8d7')
-    //.attr("transform", "translate(0, -140)")
     .attr("width", width)
     .attr("height", height);
 
@@ -50,11 +55,17 @@ var rollup = rollup_group.append("rect")
   .attr("x", 10)
   .attr("y", height - 65 - 10);
 
-rollup_group.append("image")
-  .attr("xlink:href", "http://sciencehackday.org/images/flags/Lithuania.png")
+var flag = rollup_group.append("image")
+  .attr("xlink:href", "")
   .attr("x", 20)
   .attr("y", height - 65)
   .attr("width", 80);
+
+var text = rollup_group.append("text")
+  .classed("flag-text", true)
+  .text("")
+  .attr("x", 110)
+  .attr("y", height - 35)
 
 // load and display the World
 d3.json("world-simp.json", function(error, topology) {
@@ -77,7 +88,10 @@ d3.json("world-simp.json", function(error, topology) {
         var name = d.transliterated_name || d.name;
         if(!seen[d.name]) {
           markers.push({x: c[0] || -10000, y: c[1] || -10000, r: 6});
-          labels.push({x: c[0] || -10000, y: c[1] || -10000, name: name.toUpperCase(), width: 0.0, height: 0.0})
+          labels.push({x: c[0] || -10000, y: c[1] || -10000, 
+            country: d.country,
+            label: name + ", " + d.country,
+            name: name.toUpperCase(), width: 0.0, height: 0.0})
           seen[d.name] = 1;
         }
       });
@@ -101,6 +115,7 @@ d3.json("world-simp.json", function(error, topology) {
         .data(labels)
         .enter()
         .append("text")
+        .classed("map-text", true)
         .attr("text-anchor", function(d) { return (d.position || "start") })
         .text(function(d) { 
           return d.name;
@@ -111,7 +126,9 @@ d3.json("world-simp.json", function(error, topology) {
         .style("font-family", "blackoutmidnight")
         .style('opacity','0.0')
         .on('mouseover', function(d, i){
-          rollup_group.transition().duration(250).attr("transform", "translate(0, 0)")
+          flag.attr("xlink:href", "http://sciencehackday.org/images/flags/" + d.country + ".png");
+          text.text(d.label);
+          rollup_group.transition().duration(250).attr("transform", "translate(0, 0)");
           g.selectAll("text").transition().duration(250).style({
             'font-size': '12px', 
             opacity:'0.1'
@@ -150,7 +167,7 @@ d3.json("world-simp.json", function(error, topology) {
           .width(width)
           .height(height)
           .start(500);
-        svg.selectAll("text")
+        svg.selectAll("text.map-text")
           .transition()
           .style('opacity', '0.8')
           .attr("x", function(d) { return d.x; })
