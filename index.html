@@ -2,27 +2,68 @@
 <meta charset="utf-8">
 <link rel="stylesheet" href="stylesheet.css" type="text/css" charset="utf-8" />
 <style>
+#map-container {
+  position: relative;
+}
 svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1;
 }
 path {
   stroke: #ccc;
   stroke-width: 0px;
   fill: white;
 }
+text {
+  cursor: pointer;
+}
 
 .rollup { 
   fill: #f4f4f4;
 }
-.flag-text {
-  font-family: "Droid Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-size: 16pt;
+.rollover-text {
+  top: 50%;
+  font-size: 16px;
+  font-family: Merriweather;
+  font-weight: 200;
+  margin-left: 20px;
+  margin-right: 15px;
+}
+#map-rollover {
+  display: flex;
+  flex-direction: row;
+  position: absolute;
+  align-items: center;
+  margin: 20px;
+  padding: 10px;
+  background-color: #eee;
+  left: 0;
+  z-index: 1;
+  opacity: 0.0;
+}
+img#rollover-img {
+  width: 64px;
+  height: 36px;
 }
 
 </style>
 <body>
-  <div id="map"></div>
-<link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Droid+Sans:regular,bold" />
+  <div id="map-container">
+    <div id="map"></div>
+    <div id="map-rollover">
+      <div>
+        <img id="rollover-img" src="http://sciencehackday.org/images/flags/Brazil.png" />
+      </div>
+      <div class="rollover-text" id="rollover-location">St Petersburg</div>
+      <div class="rollover-text" id="rollover-upcoming">Upcoming Event: Stay tuned</div>
+      <div class="rollover-text" id="rollover-previous">Previous Event: November 12-13 2016</div>
+    </div>
+  </div>
+<link href='http://fonts.googleapis.com/css?family=Merriweather:400,300,700,900' rel='stylesheet' type='text/css'>
   
+<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.6.0/moment.min.js"></script>
 <script src="//d3js.org/d3.v3.min.js"></script>
 <script src="labeler.js"></script>
 <script src="//d3js.org/topojson.v0.min.js"></script>
@@ -30,6 +71,12 @@ path {
 <script>
 var width = 940,
     height = 560;
+
+var rollover = d3.select("#map-rollover");
+rollover
+  //.style('opacity', 0.0)
+  .style('width', (width - 60) + 'px')
+  .style('top', (height - 100) + 'px');
 
 var projection = d3.geo.mercator()
     .center([10, 40 ])
@@ -45,27 +92,6 @@ var path = d3.geo.path()
     .projection(projection);
 
 var g = svg.append("g");
-
-var rollup_group = svg.append("g")
-  .style("opacity", 0.0)
-var rollup = rollup_group.append("rect")
-  .classed("rollup", true)
-  .attr("width", width - 20)
-  .attr("height", 65)
-  .attr("x", 10)
-  .attr("y", height - 65 - 10);
-
-var flag = rollup_group.append("image")
-  .attr("xlink:href", "")
-  .attr("x", 20)
-  .attr("y", height - 65)
-  .attr("width", 80);
-
-var text = rollup_group.append("text")
-  .classed("flag-text", true)
-  .text("")
-  .attr("x", 110)
-  .attr("y", height - 35)
 
 // load and display the World
 d3.json("world-simp.json", function(error, topology) {
@@ -84,12 +110,30 @@ d3.json("world-simp.json", function(error, topology) {
       labels = [];
       var seen = {};
       data.flags.forEach(function(d, i) {
+        d.flagName = d.country.replace(/\s*/g, "");
+        d.startDate = moment(d.start, "DD MMMM YYYY");
+        if(!d.startDate.isValid()) d.startDate = moment();
+        d.endDate = moment(d.end, "DD MMMM YYYY");
+        if(d.startDate.format() == d.endDate.format()) {
+          d.startEnd = d.endDate.format("D MMMM YYYY");
+        } else if(d.startDate.month() == d.endDate.month()) {
+            d.startEnd = d.startDate.format("D") + "-" + d.endDate.format("D MMMM YYYY");
+        } else if(d.startDate.year() == d.endDate.year()) {
+          d.startEnd = d.startDate.format("D MMMM") + " - " + d.endDate.format("D MMMM YYYY");
+        } else {
+          d.startEnd = d.startDate.format("D MMMM YYYY") + " - " + d.endDate.format("D MMMM YYYY");
+        }
+        
         var c = projection([180 + d.longitude, d.latitude]);
         var name = d.transliterated_name || d.name;
         if(!seen[d.name]) {
           markers.push({x: c[0] || -10000, y: c[1] || -10000, r: 6});
           labels.push({x: c[0] || -10000, y: c[1] || -10000, 
-            country: d.country,
+            startDate: d.startDate,
+            endDate: d.endDate,
+            startEnd: d.startEnd,
+            url: d.url,
+            country: d.flagName,
             label: name + ", " + d.country,
             name: name.toUpperCase(), width: 0.0, height: 0.0})
           seen[d.name] = 1;
@@ -120,15 +164,24 @@ d3.json("world-simp.json", function(error, topology) {
         .text(function(d) { 
           return d.name;
         })
+      .on('click', function(d) {
+        window.location = d.url;
+      })
       .style("fill", "black")
         .style("font-size", "12px")
         .style("font-weight", "bold")
         .style("font-family", "blackoutmidnight")
         .style('opacity','0.0')
         .on('mouseover', function(d, i){
-          flag.attr("xlink:href", "http://sciencehackday.org/images/flags/" + d.country + ".png");
-          text.text(d.label);
-          rollup_group.transition().duration(250).style("opacity", 1.0);
+          d3.select("#rollover-img").attr("src", "http://sciencehackday.org/images/flags/" + d.country + ".png");
+          d3.select("#rollover-location").html(d.label);
+          if(d.startDate.isAfter()) {
+            d3.select("#rollover-upcoming").html("Upcoming: " + d.startEnd);
+          } else {
+            d3.select("#rollover-upcoming").html("Upcoming: Stay tuned");
+          }
+          d3.select("#rollover-previous").html("");
+          rollover.transition().duration(250).style("opacity", 1.0);
           g.selectAll("text").transition().duration(250).style({
             'font-size': '12px', 
             opacity:'0.1'
@@ -144,7 +197,7 @@ d3.json("world-simp.json", function(error, topology) {
           });
         })
       .on('mouseout', function(d, i){
-        rollup_group.transition().duration(250).style("opacity", 0.0);
+        rollover.transition().duration(250).style("opacity", 0.0);
         g.selectAll("text").transition().duration(250).style({
           'font-size': '12px', 
           opacity:'0.7'
