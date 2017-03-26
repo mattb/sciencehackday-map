@@ -70,7 +70,7 @@ img#rollover-img {
 <script src="//d3js.org/d3.geo.projection.v0.min.js"></script>
 <script>
 var width = 940,
-    height = 560;
+    height = 480;
 
 var rollover = d3.select("#map-rollover");
 rollover
@@ -79,7 +79,7 @@ rollover
   .style('top', (height - 100) + 'px');
 
 var projection = d3.geo.mercator()
-    .center([10, 40 ])
+    .center([10, 10 ])
     .scale(140)
     .rotate([-180,0]);
 
