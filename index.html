@@ -173,7 +173,7 @@ d3.json("world-simp.json", function(error, topology) {
           d3.select("#rollover-img").attr("src", "http://sciencehackday.org/images/flags/" + d.country + ".png");
           d3.select("#rollover-location").html(d.label);
           if(d.startDate.isAfter()) {
-            d3.select("#rollover-upcoming").html("Upcoming: " + d.startEnd);
+            d3.select("#rollover-upcoming").html("Upcoming: <a href='" + d.url + "'>" + d.startEnd + "</a>");
           } else {
             d3.select("#rollover-upcoming").html("Upcoming: Stay tuned");
           }
