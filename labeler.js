@@ -1,4 +1,29 @@
 (function() {
+function alea(s0, s1, c) {
+  return function aleaStep() {
+    var t = 2091639 * s0 + c * 2.3283064365386963e-10;
+    s0 = s1;
+    return s1 = t - (c = t | 0);
+  };
+}
+
+function aleaFromSeed(seed) {
+  var s0, s1, h, n = 0xefc8249d, v;
+  seed = 'X' + (seed || +new Date());
+  for (var i = 0; i < 2; i++) {
+    for (var j = 0; j < seed.length; j++) {
+      n += seed.charCodeAt(j);
+      h = 0.02519603282416938 * n;
+      n = h >>> 0; h -= n; h *= n;
+      n = h >>> 0; h -= n; n += h * 0x100000000;
+    }
+    v = (n >>> 0) * 2.3283064365386963e-10;
+    if (i === 0) s0 = v; else s1 = v;
+  }
+  return alea(s0, s1, 1);
+}
+
+var random = aleaFromSeed(12530);
 
 d3.labeler = function() {
   var lab = [],
@@ -92,7 +117,7 @@ d3.labeler = function() {
   // Monte Carlo translation move
 
       // select a random label
-      var i = Math.floor(Math.random() * lab.length); 
+      var i = Math.floor(random() * lab.length); 
 
       // save old coordinates
       var x_old = lab[i].x;
@@ -104,8 +129,8 @@ d3.labeler = function() {
       else {old_energy = energy(i)}
 
       // random translation
-      lab[i].x += (Math.random() - 0.5) * max_move;
-      lab[i].y += (Math.random() - 0.5) * max_move;
+      lab[i].x += (random() - 0.5) * max_move;
+      lab[i].y += (random() - 0.5) * max_move;
 
       // hard wall boundaries
       if (lab[i].x > w) lab[i].x = x_old;
@@ -121,7 +146,7 @@ d3.labeler = function() {
       // delta E
       var delta_energy = new_energy - old_energy;
 
-      if (Math.random() < Math.exp(-delta_energy / currT)) {
+      if (random() < Math.exp(-delta_energy / currT)) {
         acc += 1;
       } else {
         // move back to old coordinates
@@ -136,7 +161,7 @@ d3.labeler = function() {
   // Monte Carlo rotation move
 
       // select a random label
-      var i = Math.floor(Math.random() * lab.length); 
+      var i = Math.floor(random() * lab.length); 
 
       // save old coordinates
       var x_old = lab[i].x;
@@ -148,7 +173,7 @@ d3.labeler = function() {
       else {old_energy = energy(i)}
 
       // random angle
-      var angle = (Math.random() - 0.5) * max_angle;
+      var angle = (random() - 0.5) * max_angle;
 
       var s = Math.sin(angle);
       var c = Math.cos(angle);
@@ -179,7 +204,7 @@ d3.labeler = function() {
       // delta E
       var delta_energy = new_energy - old_energy;
 
-      if (Math.random() < Math.exp(-delta_energy / currT)) {
+      if (random() < Math.exp(-delta_energy / currT)) {
         acc += 1;
       } else {
         // move back to old coordinates
@@ -223,7 +248,7 @@ d3.labeler = function() {
 
       for (var i = 0; i < nsweeps; i++) {
         for (var j = 0; j < m; j++) { 
-          if (Math.random() < 0.5) { mcmove(currT); }
+          if (random() < 0.5) { mcmove(currT); }
           else { mcrotate(currT); }
         }
         currT = cooling_schedule(currT, initialT, nsweeps);
