@@ -389,6 +389,8 @@ require('d3-geo-projection');
       const markers = [];
       const labels = [];
       const seen = {};
+      const previous = {};
+      const lastYear = moment().startOf('year').subtract(1, 'year');
       data.flags.forEach(flag => {
         const d = Object.assign({}, flag);
         d.flagName = d.country.replace(/\s*/g, '');
@@ -405,9 +407,34 @@ require('d3-geo-projection');
           d.startEnd = `${d.startDate.format('D MMMM YYYY')} - ${d.endDate.format('D MMMM YYYY')}`;
         }
 
-        const c = projection([180 + d.longitude, d.latitude]);
         const name = d.transliterated_name || d.name;
+        d.label = `${name}, ${d.country}`;
+
+        if (d.startDate.isAfter()) {
+          d.upcoming = `Upcoming: <a href="${d.url}">${d.startEnd}</a>`;
+        } else if (d.startDate.isAfter(lastYear)) {
+          d.upcoming = 'Stay tuned!';
+          previous[
+            d.label
+          ] = `Previously: <a href="${d.url}">${d.startEnd}</a>`;
+        } else {
+          d.upcoming = '<a href="mailto:ariel@sciencehackday.org?subject=Science Hack Day">Organize the next one!</a>';
+          previous[
+            d.label
+          ] = `Previously: <a href="${d.url}">${d.startEnd}</a>`;
+        }
+
+        if (seen[d.name]) {
+          if (!previous[d.label]) {
+            previous[
+              d.label
+            ] = `Previously: <a href="${d.url}">${d.startEnd}</a>`;
+          }
+        }
+
         if (!seen[d.name]) {
+          const c = projection([180 + d.longitude, d.latitude]);
+
           markers.push({ x: c[0] || -10000, y: c[1] || -10000, r: 6 });
           labels.push({
             x: c[0] || -10000,
@@ -416,8 +443,9 @@ require('d3-geo-projection');
             endDate: d.endDate,
             startEnd: d.startEnd,
             url: d.url,
+            upcoming: d.upcoming,
             country: d.flagName,
-            label: `${name}, ${d.country}`,
+            label: d.label,
             name: name.toUpperCase(),
             width: 0.0,
             height: 0.0
@@ -466,18 +494,11 @@ require('d3-geo-projection');
             `http://sciencehackday.org/images/flags/${d.country}.png`
           );
         d3.select('#rollover-location').html(d.label);
-        if (d.startDate.isAfter()) {
-          d3
-            .select('#rollover-upcoming')
-            .html(`Upcoming: <a href="${d.url}">${d.startEnd}</a>`);
-        } else {
-          d3.select('#rollover-upcoming').html('Upcoming: Stay tuned');
-        }
-        d3.select('#rollover-previous').html('');
+        d3.select('#rollover-upcoming').html(d.upcoming);
+        d3.select('#rollover-previous').html(previous[d.label]);
         rollover.transition().duration(250).style('opacity', 1.0);
       });
       labelTexts.on('mouseover', (d, i, nodes) => {
-        console.log('MOSUEOVER', d, i, nodes[i]);
         g
           .selectAll('text')
           .transition()
