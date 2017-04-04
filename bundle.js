@@ -352,7 +352,7 @@ require('d3-geo-projection');
   // .style('opacity', 0.0)
   .style('width', width - 60 + 'px').style('top', height - 100 + 'px');
 
-  var projection = d3.geoMercator().center([10, 10]).scale(140).rotate([-180, 0]);
+  var projection = d3.geoMercator().center([10, 0]).scale(140).rotate([-180, 0]);
 
   var svg = elt.append('svg').classed('map', true).style('background-color', '#d2e8d7').attr('width', width).attr('height', height);
 

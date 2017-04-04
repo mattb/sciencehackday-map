@@ -361,7 +361,7 @@ require('d3-geo-projection');
 
   const projection = d3
     .geoMercator()
-    .center([10, 10])
+    .center([10, 0])
     .scale(140)
     .rotate([-180, 0]);
 
