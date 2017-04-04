@@ -359,8 +359,8 @@ require('d3-geo-projection');
     .style('width', `${width - 60}px`)
     .style('top', `${height - 100}px`);
 
-  const projection = d3.geo
-    .mercator()
+  const projection = d3
+    .geoMercator()
     .center([10, 10])
     .scale(140)
     .rotate([-180, 0]);
@@ -372,12 +372,11 @@ require('d3-geo-projection');
     .attr('width', width)
     .attr('height', height);
 
-  const path = d3.geo.path().projection(projection);
-
-  const g = svg.append('g');
+  const path = d3.geoPath().projection(projection);
 
   // load and display the World
   d3.json('world-simp.json', (error, topology) => {
+    const g = svg.append('g');
     g
       .selectAll('path')
       .data(topojson.feature(topology, topology.objects.countries).features)
@@ -454,60 +453,68 @@ require('d3-geo-projection');
         .style('font-weight', 'bold')
         .style('font-family', 'blackoutmidnight')
         .style('opacity', '0.0');
-      labelTexts
-        .on('click', d => {
-          console.log('CLICK');
+
+      svg.on('click', () => {
+        rollover.transition().duration(250).style('opacity', 0.0);
+      });
+      labelTexts.on('click', d => {
+        d3.event.stopPropagation();
+        d3
+          .select('#rollover-img')
+          .attr(
+            'src',
+            `http://sciencehackday.org/images/flags/${d.country}.png`
+          );
+        d3.select('#rollover-location').html(d.label);
+        if (d.startDate.isAfter()) {
           d3
-            .select('#rollover-img')
-            .attr(
-              'src',
-              `http://sciencehackday.org/images/flags/${d.country}.png`
-            );
-          d3.select('#rollover-location').html(d.label);
-          if (d.startDate.isAfter()) {
-            d3
-              .select('#rollover-upcoming')
-              .html(`Upcoming: <a href="${d.url}">${d.startEnd}</a>`);
-          } else {
-            d3.select('#rollover-upcoming').html('Upcoming: Stay tuned');
-          }
-          d3.select('#rollover-previous').html('');
-          rollover.transition().duration(250).style('opacity', 1.0);
-        })
-        .on('mouseover', function mouseover(d, i) {
-          console.log('MOSUEOVER');
-          g.selectAll('text').transition().duration(250).style({
-            'font-size': '12px',
-            opacity: '0.1'
-          });
-          d3.select(`#line-${i}`).transition().style({ opacity: '0.9' });
+            .select('#rollover-upcoming')
+            .html(`Upcoming: <a href="${d.url}">${d.startEnd}</a>`);
+        } else {
+          d3.select('#rollover-upcoming').html('Upcoming: Stay tuned');
+        }
+        d3.select('#rollover-previous').html('');
+        rollover.transition().duration(250).style('opacity', 1.0);
+      });
+      labelTexts.on('mouseover', (d, i, nodes) => {
+        console.log('MOSUEOVER', d, i, nodes[i]);
+        g
+          .selectAll('text')
+          .transition()
+          .duration(250)
+          .style('font-size', '12px')
+          .style('opacity', '0.1');
+        d3.select(`#line-${i}`).transition().style('opacity', '0.9');
 
-          g.selectAll('circle').transition().style({ opacity: '0.1' });
-          d3.select(`#circle-${i}`).transition().style({ opacity: '0.9' });
+        g.selectAll('circle').transition().style('opacity', '0.1');
+        d3.select(`#circle-${i}`).transition().style('opacity', '0.9');
 
-          d3.select(this).transition().duration(250).style({
-            'font-size': '20px',
-            opacity: '1.0'
-          });
-        })
-        .on('mouseout', (d, i) => {
-          console.log('MOSUEOUT');
-          g.selectAll('text').transition().duration(250).style({
-            'font-size': '12px',
-            opacity: '0.7'
-          });
-          g
-            .selectAll('circle')
-            .transition()
-            .duration(250)
-            .style({ opacity: '0.7' });
-          d3.select(`#line-${i}`).transition().style({ opacity: '0.0' });
-        });
+        d3
+          .select(nodes[i])
+          .transition()
+          .duration(250)
+          .style('font-size', '20px')
+          .style('opacity', '1.0');
+      });
+      labelTexts.on('mouseout', (d, i) => {
+        g
+          .selectAll('text')
+          .transition()
+          .duration(250)
+          .style('font-size', '12px')
+          .style('opacity', '0.7');
+        g
+          .selectAll('circle')
+          .transition()
+          .duration(250)
+          .style('opacity', '0.7');
+        d3.select(`#line-${i}`).transition().style('opacity', '0.0');
+      });
 
       let index = 0;
-      labelTexts.each(function l() {
-        labels[index].width = this.getBBox().width;
-        labels[index].height = this.getBBox().height;
+      labelTexts.each((d, i, nodes) => {
+        labels[index].width = nodes[i].getBBox().width;
+        labels[index].height = nodes[i].getBBox().height;
         index += 1;
       });
 
@@ -522,7 +529,6 @@ require('d3-geo-projection');
             .start(500);
           svg
             .selectAll('text.map-text')
-            .transition()
             .style('opacity', '0.8')
             .attr('x', d => d.x)
             .attr('y', d => d.y)
