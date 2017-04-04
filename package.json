@@ -1,0 +1,31 @@
+{
+  "name": "shdmap",
+  "version": "1.0.0",
+  "description": "",
+  "main": "bundle.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mattb/sciencehackday-map.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mattb/sciencehackday-map/issues"
+  },
+  "homepage": "https://github.com/mattb/sciencehackday-map#readme",
+  "devDependencies": {
+    "babel-preset-es2015": "^6.24.0",
+    "babelify": "^7.3.0",
+    "browserify": "^14.1.0",
+    "watchify": "^3.9.0"
+  },
+  "dependencies": {
+    "d3": "^3.5.17",
+    "d3-geo-projection": "^0.2.16",
+    "moment": "^2.18.1",
+    "topojson": "2.2.0"
+  }
+}

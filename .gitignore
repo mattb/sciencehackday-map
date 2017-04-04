@@ -1,2 +1,4 @@
-.*.sw*
+bundle.js
+node_modules
 tags
+.*.sw*
