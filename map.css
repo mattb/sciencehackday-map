@@ -39,9 +39,9 @@ text {
   background-color: #fff;
   left: 0;
   z-index: 1;
-  opacity: 0.0;
 }
-img#rollover-img {
+#rollover-img {
+  opacity: 0.0;
   width: 64px;
   height: 36px;
 }

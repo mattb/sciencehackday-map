@@ -354,10 +354,7 @@ require('d3-geo-projection');
   const height = eltRect.height;
 
   const rollover = d3.select('#map-rollover');
-  rollover
-    // .style('opacity', 0.0)
-    .style('width', `${width - 60}px`)
-    .style('top', `${height - 100}px`);
+  rollover.style('width', `${width - 60}px`).style('top', `${height - 100}px`);
 
   const projection = d3
     .geoMercator()
@@ -390,6 +387,11 @@ require('d3-geo-projection');
       const labels = [];
       const seen = {};
       const previous = {};
+      const counters = {
+        countries: {},
+        cities: {},
+        events: 0
+      };
       const lastYear = moment().startOf('year').subtract(1, 'year');
       data.flags.forEach(flag => {
         const d = Object.assign({}, flag);
@@ -409,6 +411,10 @@ require('d3-geo-projection');
 
         const name = d.transliterated_name || d.name;
         d.label = `${name}, ${d.country}`;
+
+        counters.events += 1;
+        counters.countries[d.country] = 1;
+        counters.cities[d.label] = 1;
 
         if (d.startDate.isAfter()) {
           d.upcoming = `Upcoming: <a href="${d.url}">${d.startEnd}</a>`;
@@ -457,6 +463,15 @@ require('d3-geo-projection');
           seen[d.name] = 1;
         }
       });
+      counters.countries = Object.keys(counters.countries).length;
+      counters.cities = Object.keys(counters.cities).length;
+      d3
+        .select('#rollover-location')
+        .html(
+          `${counters.events} events, ${counters.cities} cities, ${counters.countries} countries`
+        );
+      d3.select('#rollover-upcoming').html('');
+      d3.select('#rollover-previous').html('');
 
       const lines = g.append('g');
 
@@ -486,13 +501,11 @@ require('d3-geo-projection');
         .style('font-family', 'blackoutmidnight')
         .style('opacity', '0.0');
 
-      svg.on('click', () => {
-        rollover.transition().duration(250).style('opacity', 0.0);
-      });
       labelTexts.on('click', d => {
         d3.event.stopPropagation();
         d3
           .select('#rollover-img')
+          .style('opacity', 1.0)
           .attr(
             'src',
             `http://sciencehackday.org/images/flags/${d.country}.png`

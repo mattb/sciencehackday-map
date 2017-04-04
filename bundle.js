@@ -348,9 +348,7 @@ require('d3-geo-projection');
   var height = eltRect.height;
 
   var rollover = d3.select('#map-rollover');
-  rollover
-  // .style('opacity', 0.0)
-  .style('width', width - 60 + 'px').style('top', height - 100 + 'px');
+  rollover.style('width', width - 60 + 'px').style('top', height - 100 + 'px');
 
   var projection = d3.geoMercator().center([10, 0]).scale(140).rotate([-180, 0]);
 
@@ -369,6 +367,11 @@ require('d3-geo-projection');
       var labels = [];
       var seen = {};
       var previous = {};
+      var counters = {
+        countries: {},
+        cities: {},
+        events: 0
+      };
       var lastYear = moment().startOf('year').subtract(1, 'year');
       data.flags.forEach(function (flag) {
         var d = Object.assign({}, flag);
@@ -388,6 +391,10 @@ require('d3-geo-projection');
 
         var name = d.transliterated_name || d.name;
         d.label = name + ', ' + d.country;
+
+        counters.events += 1;
+        counters.countries[d.country] = 1;
+        counters.cities[d.label] = 1;
 
         if (d.startDate.isAfter()) {
           d.upcoming = 'Upcoming: <a href="' + d.url + '">' + d.startEnd + '</a>';
@@ -430,6 +437,11 @@ require('d3-geo-projection');
           seen[d.name] = 1;
         }
       });
+      counters.countries = Object.keys(counters.countries).length;
+      counters.cities = Object.keys(counters.cities).length;
+      d3.select('#rollover-location').html(counters.events + ' events, ' + counters.cities + ' cities, ' + counters.countries + ' countries');
+      d3.select('#rollover-upcoming').html('');
+      d3.select('#rollover-previous').html('');
 
       var lines = g.append('g');
 
@@ -447,12 +459,9 @@ require('d3-geo-projection');
         return d.name;
       }).style('fill', 'black').style('font-size', '12px').style('font-weight', 'bold').style('font-family', 'blackoutmidnight').style('opacity', '0.0');
 
-      svg.on('click', function () {
-        rollover.transition().duration(250).style('opacity', 0.0);
-      });
       labelTexts.on('click', function (d) {
         d3.event.stopPropagation();
-        d3.select('#rollover-img').attr('src', 'http://sciencehackday.org/images/flags/' + d.country + '.png');
+        d3.select('#rollover-img').style('opacity', 1.0).attr('src', 'http://sciencehackday.org/images/flags/' + d.country + '.png');
         d3.select('#rollover-location').html(d.label);
         d3.select('#rollover-upcoming').html(d.upcoming);
         d3.select('#rollover-previous').html(previous[d.label]);
