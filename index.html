@@ -1,55 +1,7 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <link rel="stylesheet" href="stylesheet.css" type="text/css" charset="utf-8" />
-<style>
-#map-container {
-  position: relative;
-}
-#map {
-  width: 940px;
-  height: 520px;
-}
-svg {
-  top: 0;
-  left: 0;
-  z-index: -1;
-}
-line.stick {
-}
-path {
-  stroke: #ccc;
-  stroke-width: 0px;
-  fill: white;
-}
-text {
-  cursor: pointer;
-}
-.rollover-text {
-  top: 50%;
-  font-size: 16px;
-  font-family: Merriweather;
-  font-weight: 200;
-  margin-left: 20px;
-  margin-right: 15px;
-}
-#map-rollover {
-  display: flex;
-  flex-direction: row;
-  position: absolute;
-  align-items: center;
-  margin: 20px;
-  padding: 10px;
-  background-color: #eee;
-  left: 0;
-  z-index: 1;
-  opacity: 0.0;
-}
-img#rollover-img {
-  width: 64px;
-  height: 36px;
-}
-
-</style>
+<link rel="stylesheet" href="map.css" type="text/css" charset="utf-8" />
 <body>
   <div id="map-container">
     <div id="map"></div>
