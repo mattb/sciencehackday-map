@@ -395,7 +395,7 @@ require('d3-geo-projection');
           d.upcoming = 'Upcoming: Stay tuned!';
           previous[d.label] = 'Previously: <a href="' + d.url + '">' + d.startEnd + '</a>';
         } else {
-          d.upcoming = 'Upcoming: <a href="mailto:ariel@sciencehackday.org?subject=Science Hack Day">Organize the next one!</a>';
+          d.upcoming = 'Upcoming: <a href="mailto:ariel@sciencehackday.org?subject=I\'d like to organize Science Hack Day in ' + name + '">Organize the next one!</a>';
           previous[d.label] = 'Previously: <a href="' + d.url + '">' + d.startEnd + '</a>';
         }
 
