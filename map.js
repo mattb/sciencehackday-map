@@ -204,7 +204,7 @@ require('d3-geo-projection');
       // delta E
       const delta_energy = new_energy - old_energy;
 
-      if (random() < Math.exp((-delta_energy) / currT)) {
+      if (random() < Math.exp(-delta_energy / currT)) {
         acc += 1;
       } else {
         // move back to old coordinates
@@ -267,7 +267,7 @@ require('d3-geo-projection');
       // delta E
       const delta_energy = new_energy - old_energy;
 
-      if (random() < Math.exp((-delta_energy) / currT)) {
+      if (random() < Math.exp(-delta_energy / currT)) {
         acc += 1;
       } else {
         // move back to old coordinates
@@ -556,48 +556,45 @@ require('d3-geo-projection');
         index += 1;
       });
 
-      setTimeout(
-        () => {
-          d3
-            .labeler()
-            .label(labels)
-            .anchor(markers)
-            .width(width)
-            .height(height)
-            .start(500);
-          svg
-            .selectAll('text.map-text')
-            .style('opacity', '0.8')
-            .attr('x', d => d.x)
-            .attr('y', d => d.y)
-            .attr('dx', () => 1)
-            .attr('dy', d => d.height / 2 + 1);
+      process.nextTick(() => {
+        d3
+          .labeler()
+          .label(labels)
+          .anchor(markers)
+          .width(width)
+          .height(height)
+          .start(500);
+        svg
+          .selectAll('text.map-text')
+          .style('opacity', '0.8')
+          .attr('x', d => d.x)
+          .attr('y', d => d.y)
+          .attr('dx', () => 1)
+          .attr('dy', d => d.height / 2 + 1);
 
-          lines
-            .selectAll('line')
-            .data(labels)
-            .enter()
-            .append('line')
-            .attr('x1', d => d.x - 2)
-            .attr('y1', d => d.y)
-            .attr('x2', (d, i) => markers[i].x)
-            .attr('y2', (d, i) => markers[i].y)
-            .style('opacity', '0.0')
-            .attr('stroke', '#999')
-            .attr('id', (d, i) => `line-${i}`)
-            .attr('stroke-width', (d, i) => {
-              const x1 = d.x;
-              const y1 = d.y;
-              const x2 = markers[i].x;
-              const y2 = markers[i].y;
-              if ((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) > 300) {
-                return 2;
-              }
-              return 0;
-            });
-        },
-        1
-      );
+        lines
+          .selectAll('line')
+          .data(labels)
+          .enter()
+          .append('line')
+          .attr('x1', d => d.x - 2)
+          .attr('y1', d => d.y)
+          .attr('x2', (d, i) => markers[i].x)
+          .attr('y2', (d, i) => markers[i].y)
+          .style('opacity', '0.0')
+          .attr('stroke', '#999')
+          .attr('id', (d, i) => `line-${i}`)
+          .attr('stroke-width', (d, i) => {
+            const x1 = d.x;
+            const y1 = d.y;
+            const x2 = markers[i].x;
+            const y2 = markers[i].y;
+            if ((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) > 300) {
+              return 2;
+            }
+            return 0;
+          });
+      }, 1);
     });
   });
 })();
