@@ -1,9 +1,22 @@
+@font-face {
+  font-family: 'blackoutmidnight';
+  src: url('blackout-midnight-webfont.woff2') format('woff2'),
+  url('blackout-midnight-webfont.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
 #map-container {
   position: relative;
+  padding-bottom: 53%;
+  height: 0;
 }
 #map {
-  width: 940px;
-  height: 500px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 98%;
+  height: 100%;
+  margin-bottom: 20px;
 }
 svg {
   top: 0;
@@ -42,6 +55,12 @@ text {
 }
 #rollover-img {
   opacity: 0.0;
-  width: 64px;
-  height: 36px;
+  width: 32px;
+  height: 18px;
+}
+
+@media only screen and (max-width : 768px) {
+  #map-container {
+    display: none;
+  }
 }

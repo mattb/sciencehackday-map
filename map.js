@@ -466,7 +466,7 @@ require('d3-geo-projection');
       counters.countries = Object.keys(counters.countries).length;
       counters.cities = Object.keys(counters.cities).length;
       d3
-        .select('#rollover-location')
+        .select('#rollover-initial')
         .html(
           `${counters.events} events, ${counters.cities} cities, ${counters.countries} countries`
         );
@@ -503,6 +503,8 @@ require('d3-geo-projection');
 
       labelTexts.on('click', d => {
         d3.event.stopPropagation();
+        d3.selectAll('#map-rollover div').style('display', 'block');
+        d3.select('#rollover-initial').style('display', 'none');
         d3
           .select('#rollover-img')
           .style('opacity', 1.0)
