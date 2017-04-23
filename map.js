@@ -348,255 +348,286 @@ require('d3-geo-projection');
 
     return labeler;
   };
-  const elt = d3.select('#map');
-  const eltRect = elt.node().getBoundingClientRect();
-  const width = eltRect.width;
-  const height = eltRect.height;
 
-  const rollover = d3.select('#map-rollover');
-  rollover.style('width', `${width - 60}px`).style('top', `${height - 100}px`);
+  const makeMap = id => {
+    const elt = d3.select(id);
+    elt.html('');
+    const eltRect = elt.node().getBoundingClientRect();
+    const width = eltRect.width;
+    const height = eltRect.height;
 
-  const projection = d3
-    .geoMercator()
-    .center([10, 0])
-    .scale(140)
-    .rotate([-180, 0]);
+    const rollover = d3.select('#map-rollover');
+    rollover
+      .style('width', `${width - 60}px`)
+      .style('top', `${height - 100}px`);
 
-  const svg = elt
-    .append('svg')
-    .classed('map', true)
-    .style('background-color', '#d2e8d7')
-    .attr('width', width)
-    .attr('height', height);
+    const projection = d3.geoMercator().scale(140).rotate([-180, 0]);
 
-  const path = d3.geoPath().projection(projection);
+    const svg = elt
+      .append('svg')
+      .classed('map', true)
+      .style('background-color', '#d2e8d7')
+      .attr('width', width)
+      .attr('height', height);
 
-  // load and display the World
-  d3.json('world-simp.json', (error, topology) => {
-    const g = svg.append('g');
-    g
-      .selectAll('path')
-      .data(topojson.feature(topology, topology.objects.countries).features)
-      .enter()
-      .append('path')
-      .attr('d', path);
+    const path = d3.geoPath().projection(projection);
 
-    // load and display the cities
-    d3.json('flags-with-location.js', (d3err, data) => {
-      const markers = [];
-      const labels = [];
-      const seen = {};
-      const previous = {};
-      const counters = {
-        countries: {},
-        cities: {},
-        events: 0
-      };
-      const lastYear = moment().startOf('year').subtract(1, 'year');
-      data.flags.forEach(flag => {
-        const d = Object.assign({}, flag);
-        d.flagName = d.country.replace(/\s*/g, '');
-        d.startDate = moment(d.start, 'DD MMMM YYYY');
-        if (!d.startDate.isValid()) d.startDate = moment();
-        d.endDate = moment(d.end, 'DD MMMM YYYY');
-        if (d.startDate.format() === d.endDate.format()) {
-          d.startEnd = d.endDate.format('D MMMM YYYY');
-        } else if (d.startDate.month() === d.endDate.month()) {
-          d.startEnd = `${d.startDate.format('D')}-${d.endDate.format('D MMMM YYYY')}`;
-        } else if (d.startDate.year() === d.endDate.year()) {
-          d.startEnd = `${d.startDate.format('D MMMM')} - ${d.endDate.format('D MMMM YYYY')}`;
-        } else {
-          d.startEnd = `${d.startDate.format('D MMMM YYYY')} - ${d.endDate.format('D MMMM YYYY')}`;
-        }
-
-        const name = d.transliterated_name || d.name;
-        d.label = `${name}, ${d.country}`;
-
-        counters.events += 1;
-        counters.countries[d.country] = 1;
-        counters.cities[d.label] = 1;
-
-        if (d.startDate.isAfter()) {
-          d.upcoming = `Upcoming: <a href="${d.url}">${d.startEnd}</a>`;
-        } else if (d.startDate.isAfter(lastYear)) {
-          d.upcoming = 'Upcoming: Stay tuned!';
-          if (!previous[d.label]) {
-            previous[
-              d.label
-            ] = `Previously: <a href="${d.url}">${d.startEnd}</a>`;
-          }
-        } else {
-          d.upcoming = `Upcoming: <a href="mailto:ariel@sciencehackday.org?subject=I'd like to organize Science Hack Day in ${name}">Organize the next one!</a>`;
-          if (!previous[d.label]) {
-            previous[
-              d.label
-            ] = `Previously: <a href="${d.url}">${d.startEnd}</a>`;
-          }
-        }
-
-        if (seen[d.name]) {
-          if (!previous[d.label]) {
-            previous[
-              d.label
-            ] = `Previously: <a href="${d.url}">${d.startEnd}</a>`;
-          }
-        }
-
-        if (!seen[d.name]) {
-          const c = projection([180 + d.longitude, d.latitude]);
-
-          markers.push({ x: c[0] || -10000, y: c[1] || -10000, r: 6 });
-          labels.push({
-            x: c[0] || -10000,
-            y: c[1] || -10000,
-            startDate: d.startDate,
-            endDate: d.endDate,
-            startEnd: d.startEnd,
-            url: d.url,
-            upcoming: d.upcoming,
-            country: d.flagName,
-            label: d.label,
-            name: name.toUpperCase(),
-            width: 0.0,
-            height: 0.0
-          });
-          seen[d.name] = 1;
-        }
-      });
-      counters.countries = Object.keys(counters.countries).length;
-      counters.cities = Object.keys(counters.cities).length;
-      d3
-        .select('#rollover-initial')
-        .html(
-          `${counters.events} events, ${counters.cities} cities, ${counters.countries} countries`
-        );
-      d3.select('#rollover-upcoming').html('');
-      d3.select('#rollover-previous').html('');
-
-      const lines = g.append('g');
-
+    // load and display the World
+    d3.json('world-simp.json', (error, topology) => {
+      const g = svg.append('g');
+      const feature = topojson.feature(topology, topology.objects.countries);
+      console.log(d3.geoCentroid(feature));
+      console.log(d3.geoBounds(feature));
       g
-        .selectAll('circle')
-        .data(markers)
+        .selectAll('path')
+        .data(feature.features)
         .enter()
-        .append('circle')
-        .attr('id', (d, i) => `circle-${i}`)
-        .attr('cx', d => d.x)
-        .attr('cy', d => d.y)
-        .attr('r', 6)
-        .style('opacity', '0.7')
-        .style('fill', '#999');
+        .append('path')
+        .attr('d', path);
 
-      const labelTexts = g
-        .selectAll('text')
-        .data(labels)
-        .enter()
-        .append('text')
-        .classed('map-text', true)
-        .attr('text-anchor', d => d.position || 'start')
-        .text(d => d.name)
-        .style('fill', 'black')
-        .style('font-size', '12px')
-        .style('font-weight', 'bold')
-        .style('font-family', 'blackoutmidnight')
-        .style('opacity', '0.0');
+      const bounds = path.bounds(feature);
+      const dx = bounds[1][0] - bounds[0][0];
+      const dy = bounds[1][1] - bounds[0][1];
+      const x = (bounds[0][0] + bounds[1][0]) / 2;
+      const y = (bounds[0][1] + bounds[1][1]) / 2 - 40;
+      const scale = 1.7 / Math.max(dx / width, dy / height);
+      const translate = [width / 2 - scale * x, height / 2 - scale * y];
+      g.attr('transform', `translate(${translate})scale(${scale})`);
 
-      labelTexts.on('click', d => {
-        d3.event.stopPropagation();
-        d3.selectAll('#map-rollover div').style('display', 'block');
-        d3.select('#rollover-initial').style('display', 'none');
+      // load and display the cities
+      d3.json('flags-with-location.js', (d3err, data) => {
+        const markers = [];
+        const labels = [];
+        const seen = {};
+        const previous = {};
+        const counters = {
+          countries: {},
+          cities: {},
+          events: 0
+        };
+        const lastYear = moment().startOf('year').subtract(1, 'year');
+        data.flags.forEach(flag => {
+          const d = Object.assign({}, flag);
+          d.flagName = d.country.replace(/\s*/g, '');
+          d.startDate = moment(d.start, 'DD MMMM YYYY');
+          if (!d.startDate.isValid()) d.startDate = moment();
+          d.endDate = moment(d.end, 'DD MMMM YYYY');
+          if (d.startDate.format() === d.endDate.format()) {
+            d.startEnd = d.endDate.format('D MMMM YYYY');
+          } else if (d.startDate.month() === d.endDate.month()) {
+            d.startEnd = `${d.startDate.format('D')}-${d.endDate.format('D MMMM YYYY')}`;
+          } else if (d.startDate.year() === d.endDate.year()) {
+            d.startEnd = `${d.startDate.format('D MMMM')} - ${d.endDate.format('D MMMM YYYY')}`;
+          } else {
+            d.startEnd = `${d.startDate.format('D MMMM YYYY')} - ${d.endDate.format('D MMMM YYYY')}`;
+          }
+
+          const name = d.transliterated_name || d.name;
+          d.label = `${name}, ${d.country}`;
+
+          counters.events += 1;
+          counters.countries[d.country] = 1;
+          counters.cities[d.label] = 1;
+
+          if (d.startDate.isAfter()) {
+            d.upcoming = `Upcoming: <a href="${d.url}">${d.startEnd}</a>`;
+          } else if (d.startDate.isAfter(lastYear)) {
+            d.upcoming = 'Upcoming: Stay tuned!';
+            if (!previous[d.label]) {
+              previous[
+                d.label
+              ] = `Previously: <a href="${d.url}">${d.startEnd}</a>`;
+            }
+          } else {
+            d.upcoming = `Upcoming: <a href="mailto:ariel@sciencehackday.org?subject=I'd like to organize Science Hack Day in ${name}">Organize the next one!</a>`;
+            if (!previous[d.label]) {
+              previous[
+                d.label
+              ] = `Previously: <a href="${d.url}">${d.startEnd}</a>`;
+            }
+          }
+
+          if (seen[d.name]) {
+            if (!previous[d.label]) {
+              previous[
+                d.label
+              ] = `Previously: <a href="${d.url}">${d.startEnd}</a>`;
+            }
+          }
+
+          if (!seen[d.name]) {
+            const c = projection([180 + d.longitude, d.latitude]);
+
+            markers.push({ x: c[0] || -10000, y: c[1] || -10000, r: 6 });
+            labels.push({
+              x: c[0] || -10000,
+              y: c[1] || -10000,
+              startDate: d.startDate,
+              endDate: d.endDate,
+              startEnd: d.startEnd,
+              url: d.url,
+              upcoming: d.upcoming,
+              country: d.flagName,
+              label: d.label,
+              name: name.toUpperCase(),
+              width: 0.0,
+              height: 0.0
+            });
+            seen[d.name] = 1;
+          }
+        });
+        counters.countries = Object.keys(counters.countries).length;
+        counters.cities = Object.keys(counters.cities).length;
         d3
-          .select('#rollover-img')
-          .style('opacity', 1.0)
-          .attr(
-            'src',
-            `http://sciencehackday.org/images/flags/${d.country}.png`
+          .select('#rollover-initial')
+          .html(
+            `${counters.events} events, ${counters.cities} cities, ${counters.countries} countries`
           );
-        d3.select('#rollover-location').html(d.label);
-        d3.select('#rollover-upcoming').html(d.upcoming);
-        d3.select('#rollover-previous').html(previous[d.label]);
-        rollover.transition().duration(250).style('opacity', 1.0);
-      });
-      labelTexts.on('mouseover', (d, i, nodes) => {
-        g
-          .selectAll('text')
-          .transition()
-          .duration(250)
-          .style('font-size', '12px')
-          .style('opacity', '0.1');
-        d3.select(`#line-${i}`).transition().style('opacity', '0.9');
+        d3.select('#rollover-upcoming').html('');
+        d3.select('#rollover-previous').html('');
 
-        g.selectAll('circle').transition().style('opacity', '0.1');
-        d3.select(`#circle-${i}`).transition().style('opacity', '0.9');
+        const lines = g.append('g');
 
-        d3
-          .select(nodes[i])
-          .transition()
-          .duration(250)
-          .style('font-size', '20px')
-          .style('opacity', '1.0');
-      });
-      labelTexts.on('mouseout', (d, i) => {
-        g
-          .selectAll('text')
-          .transition()
-          .duration(250)
-          .style('font-size', '12px')
-          .style('opacity', '0.7');
         g
           .selectAll('circle')
-          .transition()
-          .duration(250)
-          .style('opacity', '0.7');
-        d3.select(`#line-${i}`).transition().style('opacity', '0.0');
-      });
+          .data(markers)
+          .enter()
+          .append('circle')
+          .attr('id', (d, i) => `circle-${i}`)
+          .attr('cx', d => d.x)
+          .attr('cy', d => d.y)
+          .attr('r', 6)
+          .style('opacity', '0.7')
+          .style('fill', '#999');
 
-      let index = 0;
-      labelTexts.each((d, i, nodes) => {
-        labels[index].width = nodes[i].getBBox().width;
-        labels[index].height = nodes[i].getBBox().height;
-        index += 1;
-      });
-
-      process.nextTick(() => {
-        d3
-          .labeler()
-          .label(labels)
-          .anchor(markers)
-          .width(width)
-          .height(height)
-          .start(500);
-        svg
-          .selectAll('text.map-text')
-          .style('opacity', '0.8')
-          .attr('x', d => d.x)
-          .attr('y', d => d.y)
-          .attr('dx', () => 1)
-          .attr('dy', d => d.height / 2 + 1);
-
-        lines
-          .selectAll('line')
+        const labelTexts = g
+          .selectAll('text')
           .data(labels)
           .enter()
-          .append('line')
-          .attr('x1', d => d.x - 2)
-          .attr('y1', d => d.y)
-          .attr('x2', (d, i) => markers[i].x)
-          .attr('y2', (d, i) => markers[i].y)
-          .style('opacity', '0.0')
-          .attr('stroke', '#999')
-          .attr('id', (d, i) => `line-${i}`)
-          .attr('stroke-width', (d, i) => {
-            const x1 = d.x;
-            const y1 = d.y;
-            const x2 = markers[i].x;
-            const y2 = markers[i].y;
-            if ((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) > 300) {
-              return 2;
-            }
-            return 0;
-          });
-      }, 1);
+          .append('text')
+          .classed('map-text', true)
+          .attr('text-anchor', d => d.position || 'start')
+          .text(d => d.name)
+          .style('fill', 'black')
+          .style('font-size', '12px')
+          .style('font-weight', 'bold')
+          .style('font-family', 'blackoutmidnight')
+          .style('opacity', '0.0');
+
+        labelTexts.on('click', d => {
+          d3.event.stopPropagation();
+          d3.selectAll('#map-rollover div').style('display', 'block');
+          d3.select('#rollover-initial').style('display', 'none');
+          d3
+            .select('#rollover-img')
+            .style('opacity', 1.0)
+            .attr(
+              'src',
+              `http://sciencehackday.org/images/flags/${d.country}.png`
+            );
+          d3.select('#rollover-location').html(d.label);
+          d3.select('#rollover-upcoming').html(d.upcoming);
+          d3.select('#rollover-previous').html(previous[d.label]);
+          rollover.transition().duration(250).style('opacity', 1.0);
+        });
+        labelTexts.on('mouseover', (d, i, nodes) => {
+          g
+            .selectAll('text')
+            .transition()
+            .duration(250)
+            .style('font-size', '12px')
+            .style('opacity', '0.1');
+          d3.select(`#line-${i}`).transition().style('opacity', '0.9');
+
+          g.selectAll('circle').transition().style('opacity', '0.1');
+          d3.select(`#circle-${i}`).transition().style('opacity', '0.9');
+
+          d3
+            .select(nodes[i])
+            .transition()
+            .duration(250)
+            .style('font-size', '20px')
+            .style('opacity', '1.0');
+        });
+        labelTexts.on('mouseout', (d, i) => {
+          g
+            .selectAll('text')
+            .transition()
+            .duration(250)
+            .style('font-size', '12px')
+            .style('opacity', '0.7');
+          g
+            .selectAll('circle')
+            .transition()
+            .duration(250)
+            .style('opacity', '0.7');
+          d3.select(`#line-${i}`).transition().style('opacity', '0.0');
+        });
+
+        let index = 0;
+        labelTexts.each((d, i, nodes) => {
+          labels[index].width = nodes[i].getBBox().width;
+          labels[index].height = nodes[i].getBBox().height;
+          index += 1;
+        });
+
+        process.nextTick(() => {
+          d3
+            .labeler()
+            .label(labels)
+            .anchor(markers)
+            .width(width)
+            .height(height)
+            .start(500);
+          svg
+            .selectAll('text.map-text')
+            .style('opacity', '0.8')
+            .attr('x', d => d.x)
+            .attr('y', d => d.y)
+            .attr('dx', () => 1)
+            .attr('dy', d => d.height / 2 + 1);
+
+          lines
+            .selectAll('line')
+            .data(labels)
+            .enter()
+            .append('line')
+            .attr('x1', d => d.x - 2)
+            .attr('y1', d => d.y)
+            .attr('x2', (d, i) => markers[i].x)
+            .attr('y2', (d, i) => markers[i].y)
+            .style('opacity', '0.0')
+            .attr('stroke', '#999')
+            .attr('id', (d, i) => `line-${i}`)
+            .attr('stroke-width', (d, i) => {
+              const x1 = d.x;
+              const y1 = d.y;
+              const x2 = markers[i].x;
+              const y2 = markers[i].y;
+              if ((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) > 300) {
+                return 2;
+              }
+              return 0;
+            });
+        }, 1);
+      });
     });
-  });
+  };
+
+  global.mapit = id => {
+    function debounce(fn, delay, ...args) {
+      let timer = null;
+      return function db() {
+        const context = this;
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+          fn.apply(context, args);
+        }, delay);
+      };
+    }
+    window.onresize = debounce(() => {
+      makeMap(id);
+    }, 100);
+    makeMap(id);
+  };
 })();

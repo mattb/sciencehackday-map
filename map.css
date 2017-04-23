@@ -59,8 +59,3 @@ text {
   height: 18px;
 }
 
-@media only screen and (max-width : 768px) {
-  #map-container {
-    display: none;
-  }
-}
