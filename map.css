@@ -59,8 +59,8 @@ text {
   height: 18px;
 }
 
-@media only screen and (max-device-width: 480px) and (orientation: portrait) {
-  .rollover-text {
-    font-size: 10px;
+@media only screen and (max-device-width: 736px) {
+  #map-rollover {
+    display: none;
   }
 }
