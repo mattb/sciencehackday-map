@@ -376,8 +376,6 @@ require('d3-geo-projection');
     d3.json('world-simp.json', (error, topology) => {
       const g = svg.append('g');
       const feature = topojson.feature(topology, topology.objects.countries);
-      console.log(d3.geoCentroid(feature));
-      console.log(d3.geoBounds(feature));
       g
         .selectAll('path')
         .data(feature.features)
@@ -627,7 +625,7 @@ require('d3-geo-projection');
     }
     window.onresize = debounce(() => {
       makeMap(id);
-    }, 100);
+    }, 300);
     makeMap(id);
   };
 })();
