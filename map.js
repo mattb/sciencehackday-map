@@ -373,7 +373,7 @@ require('d3-geo-projection');
     const path = d3.geoPath().projection(projection);
 
     // load and display the World
-    d3.json('world-simp.json', (error, topology) => {
+    d3.json(window.location.protocol + "//" + window.location.host + '/world-simp.json', (error, topology) => {
       const g = svg.append('g');
       const feature = topojson.feature(topology, topology.objects.countries);
       g
@@ -387,13 +387,13 @@ require('d3-geo-projection');
       const dx = bounds[1][0] - bounds[0][0];
       const dy = bounds[1][1] - bounds[0][1];
       const x = (bounds[0][0] + bounds[1][0]) / 2;
-      const y = (bounds[0][1] + bounds[1][1]) / 2 - 40;
-      const scale = 1.7 / Math.max(dx / width, dy / height);
+      const y = (bounds[0][1] + bounds[1][1]) / 2 + 20;
+      const scale = 1.4 / Math.max(dx / width, dy / height);
       const translate = [width / 2 - scale * x, height / 2 - scale * y];
       g.attr('transform', `translate(${translate})scale(${scale})`);
 
       // load and display the cities
-      d3.json('flags-with-location.js', (d3err, data) => {
+      d3.json(window.location.protocol + "//" + window.location.host + '/flags-with-location.js', (d3err, data) => {
         const markers = [];
         const labels = [];
         const seen = {};
